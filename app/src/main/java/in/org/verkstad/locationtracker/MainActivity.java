@@ -14,7 +14,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void Open_file(View view){
-        Intent intent = new Intent(this,Location.class);
+        Intent intent = new Intent(this,TrackLocation.class);
         startActivity(intent);
 
     }
