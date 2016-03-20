@@ -1,13 +1,18 @@
 package in.org.verkstad.locationtracker;
 
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -18,68 +23,85 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class TrackLocation extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener, AdapterView.OnItemSelectedListener {
+        GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
+
     GoogleApiClient googleApiClient;
-    TextView location,speed,direction;
     android.location.Location last_location;
     LocationRequest locationRequest;
     Spinner update_interval_spinner;
-    LinearLayout linear_current,linear_updated;
-    int update_interval;
+    int update_interval = 1000*60;
+    RecyclerView recyclerView;
     boolean requestingLocationUpdates;
+    RelativeLayout relativeLayout,relative_spinner;
+    SQLDatabase sqlDatabase;
+    SQLiteDatabase db;
+    String DATABASE_NAME = "LocationTracker";
+    int DATABASE_VERSION = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_location);
-        location= (TextView) findViewById(R.id.location);
-        speed= (TextView) findViewById(R.id.speed);
-        direction= (TextView) findViewById(R.id.direction);
         update_interval_spinner= (Spinner) findViewById(R.id.update_interval_spinner);
-        linear_current= (LinearLayout) findViewById(R.id.linear_current);
-        linear_updated= (LinearLayout) findViewById(R.id.linear_updated);
+        recyclerView= (RecyclerView) findViewById(R.id.recyclerview);
+        sqlDatabase = new SQLDatabase(TrackLocation.this,DATABASE_NAME,null,DATABASE_VERSION);
+        relativeLayout= (RelativeLayout) findViewById(R.id.relative);
+        relative_spinner= (RelativeLayout) findViewById(R.id.relative_spinner);
+        db = sqlDatabase.getWritableDatabase();
+        //Toast.makeText(getApplicationContext(),""+sqlDatabase.Insert(db),Toast.LENGTH_SHORT).show();
+        update_interval_spinner.setPrompt("Select time interval");
+        //update_interval_spinner.setOnItemSelectedListener(this);
+        List<String> categories = new ArrayList<String>();
+        categories.add("SELECT");
+        categories.add("1 min");
+        categories.add("5 min");
+        ArrayAdapter arrayAdapter = new ArrayAdapter(TrackLocation.this, R.layout.support_simple_spinner_dropdown_item,categories);
+        arrayAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        update_interval_spinner.setAdapter(arrayAdapter);
 
+        update_interval_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String item = parent.getItemAtPosition(position).toString();
 
+                if (item.equals("SELECT")) {
+                    return;
+                }
+                if (item.equals("1 min")) {
+                    update_interval = 1000 * 60;
+                    relativeLayout.setVisibility(View.VISIBLE);
+                    relative_spinner.setVisibility(View.GONE);
+                    createRequestforLocation();
+                } else {
+                    update_interval = 1000*60*5;
+                    relativeLayout.setVisibility(View.VISIBLE);
+                    relative_spinner.setVisibility(View.GONE);
+                    createRequestforLocation();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
         buildGoogleAPIClient();
-
         display_location();
-
         createRequestforLocation();
+
     }
 
     public void location_updates(View view){
-       // linear_current.setVisibility(View.GONE);
-       // linear_updated.setVisibility(View.VISIBLE);
+        //update_interval_spinner.setVisibility(View.VISIBLE);
         requestingLocationUpdates = true;
         startLocationUpdates();
         //Updating location time list
-       // update_interval_spinner.setOnItemSelectedListener(this);
-       // List<String> categories  = new ArrayList<String>();
-       // categories.add("1 min");
-       // categories.add("5 min");
-       // ArrayAdapter arrayAdapter = new ArrayAdapter(TrackLocation.this, R.layout.support_simple_spinner_dropdown_item,categories);
-       // arrayAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
-        //update_interval_spinner.setAdapter(arrayAdapter);
-    }
-
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        String item = parent.getItemAtPosition(position).toString();
-        if(item.equals("1 min")){
-            update_interval = 1000*60;
-        }
-        else {
-            update_interval = 1000*60*5;
-        }
-        //Toast.makeText(getApplicationContext(),""+update_interval,Toast.LENGTH_SHORT).show();
-    }
-    @Override
-    public void onNothingSelected(AdapterView<?> parent) {
-
     }
 
     public void stop_location_updates(View view){
@@ -97,8 +119,8 @@ public class TrackLocation extends AppCompatActivity implements GoogleApiClient.
 
     protected void createRequestforLocation(){
         locationRequest = new LocationRequest();
-        locationRequest.setInterval(10000);
-        locationRequest.setFastestInterval(2000);
+        locationRequest.setInterval(update_interval);
+        locationRequest.setFastestInterval(update_interval);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         locationRequest.setSmallestDisplacement(0);
 
@@ -159,10 +181,18 @@ public class TrackLocation extends AppCompatActivity implements GoogleApiClient.
             if(last_location != null){
                 double latitude = last_location.getLatitude();
                 double longitude = last_location.getLongitude();
-                location.setText(latitude+","+longitude);
+                long time = last_location.getTime();
+                Date date = new Date(time);
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                String text = sdf.format(date);
+                double direction = last_location.bearingTo(last_location);
+                double speed = last_location.getSpeed();
+                double check = sqlDatabase.Insert(db,latitude,longitude,speed,direction,text);
+                //Toast.makeText(getApplicationContext(),""+check,Toast.LENGTH_SHORT).show();
+                retrieving_data_from_database();
             }
             else {
-                location.setText("Error getting location.Make sure location is enabled");
+               // Toast.makeText(getApplicationContext(),"Error getting location,make sure location is enabled",Toast.LENGTH_SHORT).show();
             }
         }
         catch (SecurityException e){
@@ -186,13 +216,41 @@ public class TrackLocation extends AppCompatActivity implements GoogleApiClient.
 
     @Override
     public void onLocationChanged(android.location.Location location) {
+        long time = location.getTime();
+        Date date = new Date(time);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String text = sdf.format(date);
+        double direction = location.bearingTo(last_location);
         last_location = location;
-        display_location();
-        Toast.makeText(getApplicationContext(),"Location changed",Toast.LENGTH_SHORT).show();
-       // Log.d("location changed","called");
-
+        double speed = location.getSpeed();
+        //Toast.makeText(getApplicationContext(),"Location changed.Your speed is"+speed+"Direction is"+direction+"time is"+text,Toast.LENGTH_SHORT).show();
+        double check = sqlDatabase.Insert(db,last_location.getLatitude(),last_location.getLongitude(),speed,direction,text);
+        //Toast.makeText(getApplicationContext(),""+check,Toast.LENGTH_SHORT).show();
+        retrieving_data_from_database();
     }
 
+    public void retrieving_data_from_database(){
+        ArrayList<Double> latitude = new ArrayList<Double>();
+        ArrayList<Double> longitude = new ArrayList<Double>();
+        ArrayList<Double> direction = new ArrayList<Double>();
+        ArrayList<Double> speed = new ArrayList<Double>();
+        ArrayList<String> time = new ArrayList<String >();
+        Cursor res = db.rawQuery("SELECT * FROM Location",null);
+        res.moveToFirst();
+        while (res.isAfterLast()==false){
+            latitude.add(res.getDouble(0));
+            longitude.add(res.getDouble(1));
+            speed.add(res.getDouble(2));
+            direction.add(res.getDouble(3));
+            time.add(res.getString(4));
+            res.moveToNext();
+        }
 
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager.setStackFromEnd(true);
+        recyclerView.setLayoutManager(layoutManager);
+        RecyclerViewAdapter adapter = new RecyclerViewAdapter(TrackLocation.this,latitude,longitude,speed,direction,time);
+        recyclerView.setAdapter(adapter);
+    }
 
 }

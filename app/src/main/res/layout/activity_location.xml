@@ -8,100 +8,68 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".TrackLocation">
-
-    <LinearLayout
-        android:orientation="vertical"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="visible"
-        android:id="@+id/linear_current"
-        >
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Your Are At"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:layout_centerHorizontal="true"
-            android:id="@+id/text"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/location"
-            android:text="location"
-             />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Travelling At"
-            android:id="@+id/text2"
-            />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="speed"
-            android:id="@+id/speed"
-             />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="In Direction"
-            android:id="@+id/text3"
-           />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="direction"
-            android:id="@+id/direction"
-           />
-
+        android:visibility="gone"
+        android:id="@+id/relative">
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Get Location Updates"
             android:id="@+id/location_updates"
             android:onClick="location_updates"
-            />
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Stop Location Updates"
+            android:text="Stop Updates"
             android:id="@+id/stop_location_updates"
             android:onClick="stop_location_updates"
 
-            />
-    </LinearLayout>
+            android:layout_alignTop="@+id/location_updates"
+            android:layout_alignRight="@+id/recyclerview"
+            android:layout_alignEnd="@+id/recyclerview" />
 
-        <LinearLayout
+
+        <view
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/linear_updated"
-            android:visibility="gone"
-            android:orientation="vertical">
-            <Spinner
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/update_interval_spinner"
-                android:layout_weight="1"
-                 />
-            <view
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                class="android.support.v7.widget.RecyclerView"
-                android:layout_weight="20"></view>
+            android:layout_height="wrap_content"
+            class="android.support.v7.widget.RecyclerView"
+            android:id="@+id/recyclerview"
+            android:layout_below="@+id/stop_location_updates"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            ></view>
+    </RelativeLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/relative_spinner"
+        android:visibility="visible">
+        <Spinner
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/update_interval_spinner"
+            android:layout_below="@+id/textView2"
+            android:layout_centerHorizontal="true"
+            />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Select time interval to update your location"
+            android:id="@+id/textView2"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
 
-
-
-        </LinearLayout>
+    </RelativeLayout>
 
 
 </RelativeLayout>

@@ -13,22 +13,30 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="phone"
-        android:id="@+id/Mobile_no"
-        android:hint="Mobile number"
+        android:id="@+id/receivers_Mobile_no"
+        android:hint="Send to(eg.918954217878)"
+        android:gravity="center"/>
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="phone"
+        android:id="@+id/senders_Mobile_no"
+        android:hint="From(eg.918954217878)"
+        android:layout_below="@+id/receivers_Mobile_no"
         android:gravity="center"/>
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="send_sms"
         android:id="@+id/send_sms"
-        android:text="Send"
-        android:layout_below="@+id/Mobile_no"
+        android:text="Send SMS"
+        android:layout_below="@+id/senders_Mobile_no"
         android:layout_centerHorizontal="true"/>
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/send_sms"
-        android:text="Open File"
+        android:text="Get Your Location"
         android:onClick="Open_file"
         android:id="@+id/Open_file"
         android:layout_centerHorizontal="true"/>
