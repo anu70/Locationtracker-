@@ -3,6 +3,7 @@ package in.org.verkstad.locationtracker;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -23,6 +24,12 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -43,6 +50,8 @@ public class TrackLocation extends AppCompatActivity implements GoogleApiClient.
     SQLiteDatabase db;
     String DATABASE_NAME = "LocationTracker";
     int DATABASE_VERSION = 2;
+    String data;
+    ArrayList<String> data_external;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -235,14 +244,17 @@ public class TrackLocation extends AppCompatActivity implements GoogleApiClient.
         ArrayList<Double> direction = new ArrayList<Double>();
         ArrayList<Double> speed = new ArrayList<Double>();
         ArrayList<String> time = new ArrayList<String >();
-        Cursor res = db.rawQuery("SELECT * FROM Location",null);
+        data_external = new ArrayList<String>();
+        Cursor res = db.rawQuery("SELECT * FROM Location", null);
         res.moveToFirst();
+        data_external.clear();
         while (res.isAfterLast()==false){
             latitude.add(res.getDouble(0));
             longitude.add(res.getDouble(1));
             speed.add(res.getDouble(2));
             direction.add(res.getDouble(3));
             time.add(res.getString(4));
+            data_external.add("latitude:"+ res.getDouble(0) +""+ "longitude:" + res.getDouble(1) +""+ "speed:" + res.getDouble(2) +""+ "direction:" + res.getDouble(3) +""+ "time:" + res.getString(4));
             res.moveToNext();
         }
 
@@ -251,6 +263,37 @@ public class TrackLocation extends AppCompatActivity implements GoogleApiClient.
         recyclerView.setLayoutManager(layoutManager);
         RecyclerViewAdapter adapter = new RecyclerViewAdapter(TrackLocation.this,latitude,longitude,speed,direction,time);
         recyclerView.setAdapter(adapter);
+
+
+    }
+
+    public void save(View view){
+        File folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
+        File myFile = new File(folder,"Locationtracker.txt");
+
+        FileOutputStream fileOutputStream = null;
+        try {
+            fileOutputStream=new FileOutputStream(myFile);
+            fileOutputStream.write(data_external.toString().getBytes());
+            Toast.makeText(getApplicationContext(),"DATA SAVED TO SDcard/DCIM/Locationtracker.txt",Toast.LENGTH_LONG).show();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(),"Error,check your sdcard",Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(),"Error,check your sdcard",Toast.LENGTH_SHORT).show();
+        }
+
+        finally {
+            if (fileOutputStream!=null){
+                try {
+                    fileOutputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
     }
 
 }
